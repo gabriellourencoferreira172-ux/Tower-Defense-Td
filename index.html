@@ -1,0 +1,3018 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1.0,user-scalable=no"
+>
+
+<title>Zombie Defense TD</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#080b18;
+  color:white;
+  font-family:Arial,sans-serif;
+}
+
+canvas{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  touch-action:none;
+}
+
+/* HUD */
+
+#top{
+  position:fixed;
+  top:8px;
+  left:8px;
+  right:8px;
+  z-index:5;
+
+  display:flex;
+  gap:6px;
+  justify-content:center;
+  flex-wrap:wrap;
+
+  pointer-events:none;
+}
+
+.stat{
+  background:rgba(7,14,24,.94);
+  border:1px solid #435271;
+  border-radius:10px;
+  padding:7px 10px;
+  font-size:13px;
+}
+
+/* MENU INFERIOR */
+
+#bottom{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:10;
+
+  padding:8px;
+
+  background:
+    linear-gradient(
+      transparent,
+      rgba(3,7,12,.97) 25%
+    );
+}
+
+#shop{
+  max-width:900px;
+  margin:auto;
+
+  display:flex;
+  gap:5px;
+}
+
+button{
+  border:1px solid #40516f;
+  background:#142235;
+  color:white;
+
+  border-radius:10px;
+
+  font-weight:bold;
+
+  min-height:55px;
+
+  flex:1;
+
+  font-size:11px;
+}
+
+button:active{
+  transform:scale(.96);
+}
+
+button.selected{
+  border-color:#4ce6ff;
+  background:#124b63;
+}
+
+#waveBtn{
+  background:#087b58;
+  border-color:#2ae4a9;
+}
+
+#settingsBtn{
+  background:#29334d;
+  border-color:#7184ac;
+}
+
+#info{
+  max-width:900px;
+  margin:5px auto 0;
+
+  text-align:center;
+
+  font-size:12px;
+
+  color:#b5c3d5;
+
+  min-height:16px;
+}
+
+/* TORRE SELECIONADA */
+
+#selected{
+  display:none;
+
+  position:fixed;
+
+  left:50%;
+
+  transform:translateX(-50%);
+
+  bottom:82px;
+
+  z-index:20;
+
+  width:min(92vw,360px);
+
+  background:rgba(8,15,26,.98);
+
+  border:1px solid #405775;
+
+  border-radius:14px;
+
+  padding:10px;
+
+  text-align:center;
+}
+
+#selected button{
+  min-height:42px;
+}
+
+/* CONFIGURAÇÕES */
+
+#settingsPage{
+  display:none;
+
+  position:fixed;
+
+  inset:0;
+
+  z-index:200;
+
+  background:
+    radial-gradient(
+      circle at center,
+      #172a42,
+      #050811 75%
+    );
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:20px;
+}
+
+.settingsBox{
+  width:min(92vw,430px);
+
+  background:rgba(9,17,29,.99);
+
+  border:1px solid #466080;
+
+  border-radius:20px;
+
+  padding:25px;
+
+  box-shadow:0 15px 50px #0009;
+}
+
+.settingsBox h1{
+  text-align:center;
+  margin-top:0;
+}
+
+.setting{
+  margin:20px 0;
+}
+
+.setting label{
+  display:block;
+  margin-bottom:8px;
+  color:#c0ccdc;
+}
+
+input,
+select{
+  width:100%;
+
+  height:48px;
+
+  border-radius:10px;
+
+  border:1px solid #405875;
+
+  background:#111d2d;
+
+  color:white;
+
+  padding:0 12px;
+
+  font-size:16px;
+}
+
+.settingsButtons{
+  display:flex;
+  gap:8px;
+  margin-top:25px;
+}
+
+#applySettings{
+  background:#087b58;
+  border-color:#2ae4a9;
+}
+
+#backSettings{
+  background:#28364d;
+}
+
+/* GAME OVER */
+
+#gameover{
+  display:none;
+
+  position:fixed;
+
+  inset:0;
+
+  z-index:100;
+
+  background:rgba(0,0,0,.86);
+
+  align-items:center;
+
+  justify-content:center;
+
+  text-align:center;
+}
+
+.panel{
+  width:min(90vw,400px);
+
+  background:#101b2b;
+
+  border:1px solid #3b5372;
+
+  border-radius:18px;
+
+  padding:28px;
+}
+
+#restart{
+  background:#087b58;
+  border-color:#2ae4a9;
+}
+
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+
+<!-- =========================
+     HUD
+========================= -->
+
+<div id="top">
+
+  <div class="stat">
+    💰 <span id="money">300</span>
+  </div>
+
+  <div class="stat">
+    🌊 <span id="wave">1</span>
+  </div>
+
+  <div class="stat">
+    ❤️ <span id="baseHP">100</span>
+  </div>
+
+  <div class="stat">
+    ☠️ <span id="kills">0</span>
+  </div>
+
+</div>
+
+
+<!-- =========================
+     TORRE SELECIONADA
+========================= -->
+
+<div id="selected">
+
+  <b id="selectedName">
+    Torre
+  </b>
+
+  <div
+    id="selectedInfo"
+    style="margin:6px 0;color:#b8c7d9"
+  ></div>
+
+  <div style="display:flex;gap:6px">
+
+    <button id="upgrade">
+      ⬆️ MELHORAR
+    </button>
+
+    <button id="sell">
+      💰 VENDER
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     LOJA
+========================= -->
+
+<div id="bottom">
+
+  <div id="shop">
+
+    <button id="basic">
+      🔫<br>
+      Metralhadora<br>
+      $60
+    </button>
+
+    <button id="cannon">
+      💥<br>
+      Canhão<br>
+      $120
+    </button>
+
+    <button id="ice">
+      ❄️<br>
+      Gelo<br>
+      $90
+    </button>
+
+    <button id="waveBtn">
+      ▶️<br>
+      ONDA
+    </button>
+
+    <button id="settingsBtn">
+      ⚙️<br>
+      CONFIG
+    </button>
+
+  </div>
+
+  <div id="info">
+    Escolha uma torre e toque em um ponto azul para construí-la.
+  </div>
+
+</div>
+
+
+<!-- =========================
+     CONFIGURAÇÕES
+========================= -->
+
+<div id="settingsPage">
+
+  <div class="settingsBox">
+
+    <h1>
+      ⚙️ Configurações
+    </h1>
+
+    <div class="setting">
+
+      <label>
+        💰 Dinheiro inicial
+      </label>
+
+      <input
+        id="startingMoney"
+        type="number"
+        min="0"
+        max="999999999"
+        step="1"
+        value="300"
+      >
+
+    </div>
+
+    <div class="setting">
+
+      <label>
+        ⚡ Velocidade do jogo
+      </label>
+
+      <select id="gameSpeed">
+
+        <option value="0.5">
+          0,5× — Muito lento
+        </option>
+
+        <option value="1" selected>
+          1× — Normal
+        </option>
+
+        <option value="1.5">
+          1,5× — Rápido
+        </option>
+
+        <option value="2">
+          2× — Muito rápido
+        </option>
+
+        <option value="3">
+          3× — Insano
+        </option>
+
+      </select>
+
+    </div>
+
+    <div class="setting">
+
+      <label>
+        Velocidade atual:
+        <b id="speedText">1×</b>
+      </label>
+
+    </div>
+
+    <div class="settingsButtons">
+
+      <button id="backSettings">
+        ↩️ VOLTAR
+      </button>
+
+      <button id="applySettings">
+        ✅ APLICAR E REINICIAR
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     GAME OVER
+========================= -->
+
+<div id="gameover">
+
+  <div class="panel">
+
+    <h1>
+      🏰 BASE DESTRUÍDA
+    </h1>
+
+    <p>
+      Você chegou à onda
+      <b id="finalWave">1</b>
+    </p>
+
+    <p>
+      ☠️ Zumbis derrotados:
+      <b id="finalKills">0</b>
+    </p>
+
+    <button id="restart">
+      🔄 JOGAR NOVAMENTE
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   IMAGENS
+===================================================== */
+
+const towerImg = new Image();
+
+const monsterImg = new Image();
+
+towerImg.src = "IMG_6150.jpeg";
+
+monsterImg.src = "IMG_6147(2).jpeg";
+
+
+/* =====================================================
+   CANVAS
+===================================================== */
+
+const canvas =
+  document.getElementById("game");
+
+const ctx =
+  canvas.getContext("2d");
+
+let W = 0;
+
+let H = 0;
+
+
+function resize(){
+
+  const dpr =
+    Math.min(
+      window.devicePixelRatio || 1,
+      2
+    );
+
+  W =
+    window.innerWidth;
+
+  H =
+    window.innerHeight;
+
+  canvas.width =
+    W * dpr;
+
+  canvas.height =
+    H * dpr;
+
+  canvas.style.width =
+    W + "px";
+
+  canvas.style.height =
+    H + "px";
+
+  ctx.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
+
+}
+
+
+window.addEventListener(
+  "resize",
+  resize
+);
+
+resize();
+
+
+/* =====================================================
+   CONFIGURAÇÃO
+===================================================== */
+
+let startingMoney = 300;
+
+let gameSpeed = 1;
+
+
+/* =====================================================
+   ESTADO
+===================================================== */
+
+let money;
+
+let wave;
+
+let baseHP;
+
+let kills;
+
+let running;
+
+let waveActive;
+
+let zombies = [];
+
+let towers = [];
+
+let bullets = [];
+
+let particles = [];
+
+let selectedBuild = null;
+
+let selectedTower = null;
+
+let spawnLeft = 0;
+
+let spawnTimer = 0;
+
+let lastTime =
+  performance.now();
+
+
+/* =====================================================
+   TIPOS DE TORRE
+===================================================== */
+
+const TYPES = {
+
+  basic:{
+    name:"Metralhadora",
+    cost:60,
+    damage:9,
+    range:145,
+    fireRate:.24,
+    color:"#39d8ff",
+    projectile:"#55e8ff",
+    spriteCol:0
+  },
+
+  cannon:{
+    name:"Canhão",
+    cost:120,
+    damage:34,
+    range:175,
+    fireRate:1.05,
+    color:"#ff9c35",
+    projectile:"#ffb04a",
+    spriteCol:1
+  },
+
+  ice:{
+    name:"Torre de Gelo",
+    cost:90,
+    damage:5,
+    range:155,
+    fireRate:.55,
+    color:"#77eaff",
+    projectile:"#b9f7ff",
+    spriteCol:2
+  }
+
+};
+
+
+/* =====================================================
+   CAMINHO
+===================================================== */
+
+function pathPoints(){
+
+  return [
+
+    {
+      x:-40,
+      y:H*.25
+    },
+
+    {
+      x:W*.22,
+      y:H*.25
+    },
+
+    {
+      x:W*.22,
+      y:H*.70
+    },
+
+    {
+      x:W*.52,
+      y:H*.70
+    },
+
+    {
+      x:W*.52,
+      y:H*.35
+    },
+
+    {
+      x:W*.80,
+      y:H*.35
+    },
+
+    {
+      x:W*.80,
+      y:H*.65
+    },
+
+    {
+      x:W+40,
+      y:H*.65
+    }
+
+  ];
+
+}
+
+
+/* =====================================================
+   PONTOS DE CONSTRUÇÃO
+===================================================== */
+
+function buildSpots(){
+
+  return [
+
+    {x:W*.07,y:H*.16},
+    {x:W*.07,y:H*.34},
+    {x:W*.07,y:H*.52},
+    {x:W*.07,y:H*.72},
+
+    {x:W*.15,y:H*.16},
+    {x:W*.15,y:H*.82},
+
+    {x:W*.28,y:H*.12},
+    {x:W*.40,y:H*.12},
+    {x:W*.52,y:H*.12},
+    {x:W*.64,y:H*.12},
+    {x:W*.76,y:H*.12},
+
+    {x:W*.30,y:H*.40},
+    {x:W*.30,y:H*.58},
+
+    {x:W*.40,y:H*.84},
+    {x:W*.52,y:H*.84},
+    {x:W*.64,y:H*.84},
+
+    {x:W*.76,y:H*.22},
+    {x:W*.88,y:H*.22},
+    {x:W*.88,y:H*.40},
+    {x:W*.88,y:H*.56},
+
+    {x:W*.76,y:H*.76}
+
+  ];
+
+}
+
+
+/* =====================================================
+   BASE
+===================================================== */
+
+function basePosition(){
+
+  return {
+    x:W*.92,
+    y:H*.65
+  };
+
+}
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+function reset(){
+
+  money =
+    startingMoney;
+
+  wave = 1;
+
+  baseHP = 100;
+
+  kills = 0;
+
+  zombies = [];
+
+  towers = [];
+
+  bullets = [];
+
+  particles = [];
+
+  selectedBuild = null;
+
+  selectedTower = null;
+
+  running = true;
+
+  waveActive = false;
+
+  spawnLeft = 0;
+
+  spawnTimer = 0;
+
+  hideSelected();
+
+  updateUI();
+
+  message(
+    "💰 Partida iniciada com $" +
+    startingMoney +
+    "!"
+  );
+
+}
+
+
+/* =====================================================
+   ESCOLHER TORRE
+===================================================== */
+
+function chooseBuild(type){
+
+  selectedBuild = type;
+
+  selectedTower = null;
+
+  hideSelected();
+
+  document
+    .querySelectorAll("#shop button")
+    .forEach(
+      b =>
+        b.classList.remove("selected")
+    );
+
+  document
+    .getElementById(type)
+    .classList.add("selected");
+
+  message(
+    "Toque em um ponto azul para construir a " +
+    TYPES[type].name +
+    "."
+  );
+
+}
+
+/* =====================================================
+   BOTÕES
+===================================================== */
+
+document
+  .getElementById("basic")
+  .onclick = () =>
+    chooseBuild("basic");
+
+
+document
+  .getElementById("cannon")
+  .onclick = () =>
+    chooseBuild("cannon");
+
+
+document
+  .getElementById("ice")
+  .onclick = () =>
+    chooseBuild("ice");
+
+
+document
+  .getElementById("waveBtn")
+  .onclick = startWave;
+
+
+document
+  .getElementById("upgrade")
+  .onclick = upgradeTower;
+
+
+document
+  .getElementById("sell")
+  .onclick = sellTower;
+
+
+/* =====================================================
+   REINICIAR
+===================================================== */
+
+document
+  .getElementById("restart")
+  .onclick = () => {
+
+    document
+      .getElementById("gameover")
+      .style.display = "none";
+
+    reset();
+
+  };
+
+
+/* =====================================================
+   CONFIGURAÇÕES
+===================================================== */
+
+document
+  .getElementById("settingsBtn")
+  .onclick = () => {
+
+    document
+      .getElementById("settingsPage")
+      .style.display = "flex";
+
+    document
+      .getElementById("startingMoney")
+      .value = startingMoney;
+
+    document
+      .getElementById("gameSpeed")
+      .value = gameSpeed;
+
+    document
+      .getElementById("speedText")
+      .textContent =
+        gameSpeed + "×";
+
+  };
+
+
+document
+  .getElementById("gameSpeed")
+  .onchange = () => {
+
+    document
+      .getElementById("speedText")
+      .textContent =
+        Number(
+          document
+            .getElementById("gameSpeed")
+            .value
+        ) + "×";
+
+  };
+
+
+document
+  .getElementById("backSettings")
+  .onclick = () => {
+
+    document
+      .getElementById("settingsPage")
+      .style.display = "none";
+
+  };
+
+
+document
+  .getElementById("applySettings")
+  .onclick = () => {
+
+    let newMoney =
+      parseInt(
+        document
+          .getElementById("startingMoney")
+          .value,
+        10
+      );
+
+    if(isNaN(newMoney))
+      newMoney = 300;
+
+    newMoney =
+      Math.max(
+        0,
+        Math.min(
+          newMoney,
+          999999999
+        )
+      );
+
+    startingMoney =
+      Math.floor(newMoney);
+
+    gameSpeed =
+      Number(
+        document
+          .getElementById("gameSpeed")
+          .value
+      );
+
+    document
+      .getElementById("settingsPage")
+      .style.display = "none";
+
+    reset();
+
+    message(
+      "⚙️ Configurado! $" +
+      startingMoney +
+      " | Velocidade " +
+      gameSpeed +
+      "×"
+    );
+
+  };
+
+
+/* =====================================================
+   TOQUE NO CANVAS
+===================================================== */
+
+canvas.addEventListener(
+  "pointerdown",
+  e => {
+
+    if(!running)
+      return;
+
+    const x = e.clientX;
+    const y = e.clientY;
+
+
+    /* Selecionar uma torre */
+
+    for(const tower of towers){
+
+      if(
+        dist(
+          x,
+          y,
+          tower.x,
+          tower.y
+        ) < 30
+      ){
+
+        selectedTower =
+          tower;
+
+        selectedBuild =
+          null;
+
+        document
+          .querySelectorAll(
+            "#shop button"
+          )
+          .forEach(
+            b =>
+              b.classList.remove(
+                "selected"
+              )
+          );
+
+        showSelected();
+
+        return;
+
+      }
+
+    }
+
+
+    /* Construir torre */
+
+    if(selectedBuild){
+
+      const spots =
+        buildSpots();
+
+      let closest = null;
+
+      let closestD =
+        Infinity;
+
+
+      for(
+        const spot of spots
+      ){
+
+        const d =
+          dist(
+            x,
+            y,
+            spot.x,
+            spot.y
+          );
+
+        if(d < closestD){
+
+          closestD = d;
+
+          closest = spot;
+
+        }
+
+      }
+
+
+      if(closestD < 35){
+
+        const occupied =
+          towers.some(
+            t =>
+              dist(
+                t.x,
+                t.y,
+                closest.x,
+                closest.y
+              ) < 10
+          );
+
+
+        if(occupied){
+
+          message(
+            "Esse espaço já está ocupado."
+          );
+
+          return;
+
+        }
+
+
+        buildTower(
+          selectedBuild,
+          closest
+        );
+
+        return;
+
+      }
+
+
+      message(
+        "Construa somente nos pontos azuis."
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   CONSTRUIR TORRE
+===================================================== */
+
+function buildTower(
+  type,
+  spot
+){
+
+  const data =
+    TYPES[type];
+
+
+  if(
+    money <
+    data.cost
+  ){
+
+    message(
+      "💰 Dinheiro insuficiente!"
+    );
+
+    return;
+
+  }
+
+
+  money -=
+    data.cost;
+
+
+  towers.push({
+
+    type:type,
+
+    x:spot.x,
+
+    y:spot.y,
+
+    level:1,
+
+    cooldown:0,
+
+    spent:data.cost
+
+  });
+
+
+  selectedBuild =
+    null;
+
+
+  document
+    .querySelectorAll(
+      "#shop button"
+    )
+    .forEach(
+      b =>
+        b.classList.remove(
+          "selected"
+        )
+    );
+
+
+  updateUI();
+
+
+  message(
+    "🏗️ " +
+    data.name +
+    " construída!"
+  );
+
+}
+
+
+/* =====================================================
+   MELHORAR TORRE
+===================================================== */
+
+function upgradeTower(){
+
+  if(!selectedTower)
+    return;
+
+
+  const t =
+    selectedTower;
+
+  const d =
+    TYPES[t.type];
+
+
+  const price =
+    Math.floor(
+      d.cost *
+      .8 *
+      t.level
+    );
+
+
+  if(
+    money <
+    price
+  ){
+
+    message(
+      "💰 Dinheiro insuficiente para melhorar."
+    );
+
+    return;
+
+  }
+
+
+  money -= price;
+
+  t.level++;
+
+  t.spent += price;
+
+
+  showSelected();
+
+  updateUI();
+
+
+  message(
+    "⬆️ Torre melhorada para nível " +
+    t.level +
+    "!"
+  );
+
+}
+
+
+/* =====================================================
+   VENDER TORRE
+===================================================== */
+
+function sellTower(){
+
+  if(!selectedTower)
+    return;
+
+
+  const refund =
+    Math.floor(
+      selectedTower.spent *
+      .6
+    );
+
+
+  money += refund;
+
+
+  towers =
+    towers.filter(
+      x =>
+        x !== selectedTower
+    );
+
+
+  selectedTower =
+    null;
+
+
+  hideSelected();
+
+  updateUI();
+
+
+  message(
+    "💰 Torre vendida por $" +
+    refund +
+    "."
+  );
+
+}
+
+
+/* =====================================================
+   PAINEL DA TORRE
+===================================================== */
+
+function showSelected(){
+
+  if(!selectedTower)
+    return;
+
+
+  const t =
+    selectedTower;
+
+  const d =
+    TYPES[t.type];
+
+
+  document
+    .getElementById("selected")
+    .style.display =
+      "block";
+
+
+  document
+    .getElementById("selectedName")
+    .textContent =
+      d.name +
+      " — Nv. " +
+      t.level;
+
+
+  document
+    .getElementById("selectedInfo")
+    .textContent =
+      "Dano: " +
+      d.damage * t.level +
+      " | Alcance: " +
+      Math.floor(
+        d.range +
+        (t.level-1)*8
+      );
+
+
+  document
+    .getElementById("upgrade")
+    .textContent =
+      "⬆️ MELHORAR $" +
+      Math.floor(
+        d.cost *
+        .8 *
+        t.level
+      );
+
+}
+
+
+function hideSelected(){
+
+  document
+    .getElementById("selected")
+    .style.display =
+      "none";
+
+}
+
+
+/* =====================================================
+   COMEÇAR ONDA
+===================================================== */
+
+function startWave(){
+
+  if(!running)
+    return;
+
+
+  if(waveActive){
+
+    message(
+      "⚠️ A onda já está acontecendo!"
+    );
+
+    return;
+
+  }
+
+
+  if(zombies.length > 0){
+
+    message(
+      "Derrote os zumbis restantes primeiro."
+    );
+
+    return;
+
+  }
+
+
+  waveActive = true;
+
+
+  spawnLeft =
+    6 +
+    wave * 3;
+
+
+  spawnTimer =
+    .2;
+
+
+  message(
+    "🌊 Onda " +
+    wave +
+    " começou!"
+  );
+
+}
+
+
+/* =====================================================
+   CRIAR ZUMBI
+===================================================== */
+
+function spawnZombie(){
+
+  const p =
+    pathPoints()[0];
+
+
+  let type =
+    "normal";
+
+
+  const r =
+    Math.random();
+
+
+  if(
+    wave >= 3 &&
+    r < .18
+  ){
+
+    type =
+      "fast";
+
+  }
+
+
+  if(
+    wave >= 5 &&
+    r < .10
+  ){
+
+    type =
+      "tank";
+
+  }
+
+
+  let z;
+
+
+  /* ZUMBI NORMAL */
+
+  if(type === "normal"){
+
+    z = {
+
+      type:type,
+
+      x:p.x,
+
+      y:p.y,
+
+      hp:
+        45 +
+        wave * 8,
+
+      maxHP:
+        45 +
+        wave * 8,
+
+      speed:48,
+
+      damage:8,
+
+      reward:15,
+
+      size:20,
+
+      pathIndex:0,
+
+      slow:1
+
+    };
+
+  }
+
+
+  /* ZUMBI RÁPIDO */
+
+  if(type === "fast"){
+
+    z = {
+
+      type:type,
+
+      x:p.x,
+
+      y:p.y,
+
+      hp:
+        28 +
+        wave * 5,
+
+      maxHP:
+        28 +
+        wave * 5,
+
+      speed:82,
+
+      damage:7,
+
+      reward:18,
+
+      size:19,
+
+      pathIndex:0,
+
+      slow:1
+
+    };
+
+  }
+
+
+  /* ZUMBI TANQUE */
+
+  if(type === "tank"){
+
+    z = {
+
+      type:type,
+
+      x:p.x,
+
+      y:p.y,
+
+      hp:
+        180 +
+        wave * 22,
+
+      maxHP:
+        180 +
+        wave * 22,
+
+      speed:28,
+
+      damage:20,
+
+      reward:35,
+
+      size:23,
+
+      pathIndex:0,
+
+      slow:1
+
+    };
+
+  }
+
+
+  zombies.push(z);
+
+}
+
+
+/* =====================================================
+   ATUALIZAR ZUMBI
+===================================================== */
+
+function updateZombie(
+  z,
+  dt
+){
+
+  const path =
+    pathPoints();
+
+
+  if(
+    z.pathIndex >=
+    path.length - 1
+  ){
+
+    baseHP -=
+      z.damage *
+      dt;
+
+
+    if(baseHP <= 0){
+
+      baseHP = 0;
+
+      gameOver();
+
+    }
+
+    return;
+
+  }
+
+
+  const target =
+    path[
+      z.pathIndex + 1
+    ];
+
+
+  const dx =
+    target.x -
+    z.x;
+
+
+  const dy =
+    target.y -
+    z.y;
+
+
+  const d =
+    Math.hypot(
+      dx,
+      dy
+    );
+
+
+  const speed =
+    z.speed *
+    z.slow;
+
+
+  if(
+    d <
+    speed * dt +
+    3
+  ){
+
+    z.x =
+      target.x;
+
+    z.y =
+      target.y;
+
+    z.pathIndex++;
+
+  }
+  else{
+
+    z.x +=
+      dx / d *
+      speed *
+      dt;
+
+    z.y +=
+      dy / d *
+      speed *
+      dt;
+
+  }
+
+
+  z.slow = 1;
+
+}
+
+/* =====================================================
+   ATUALIZAR TORRE
+===================================================== */
+
+function updateTower(t,dt){
+
+  const data =
+    TYPES[t.type];
+
+  t.cooldown -= dt;
+
+  if(t.cooldown > 0)
+    return;
+
+  const range =
+    data.range +
+    (t.level-1)*8;
+
+  let target = null;
+  let bestProgress = -1;
+
+  for(const z of zombies){
+
+    if(z.hp <= 0)
+      continue;
+
+    if(
+      dist(
+        t.x,
+        t.y,
+        z.x,
+        z.y
+      ) <= range
+    ){
+
+      if(
+        z.pathIndex >=
+        bestProgress
+      ){
+
+        bestProgress =
+          z.pathIndex;
+
+        target = z;
+
+      }
+
+    }
+
+  }
+
+  if(!target)
+    return;
+
+  bullets.push({
+    x:t.x,
+    y:t.y,
+    target:target,
+    type:t.type,
+    damage:data.damage*t.level,
+    speed:
+      t.type === "cannon"
+        ? 280
+        : 420,
+    color:data.projectile
+  });
+
+  t.cooldown =
+    data.fireRate /
+    Math.sqrt(t.level);
+}
+
+
+/* =====================================================
+   ATUALIZAR PROJÉTIL
+===================================================== */
+
+function updateBullet(b,dt){
+
+  if(
+    !b.target ||
+    b.target.hp <= 0
+  ){
+    return false;
+  }
+
+  const dx =
+    b.target.x - b.x;
+
+  const dy =
+    b.target.y - b.y;
+
+  const d =
+    Math.hypot(dx,dy);
+
+  if(d < 12){
+
+    hitTarget(b);
+
+    return false;
+  }
+
+  b.x +=
+    dx/d *
+    b.speed *
+    dt;
+
+  b.y +=
+    dy/d *
+    b.speed *
+    dt;
+
+  return true;
+}
+
+
+/* =====================================================
+   ACERTAR ZUMBI
+===================================================== */
+
+function hitTarget(b){
+
+  const target =
+    b.target;
+
+  if(!target)
+    return;
+
+  target.hp -=
+    b.damage;
+
+  createParticles(
+    target.x,
+    target.y,
+    4
+  );
+
+  if(
+    b.type === "ice"
+  ){
+    target.slow = .42;
+  }
+
+  if(
+    b.type === "cannon"
+  ){
+
+    for(
+      const z of zombies
+    ){
+
+      if(
+        z !== target &&
+        dist(
+          target.x,
+          target.y,
+          z.x,
+          z.y
+        ) < 48
+      ){
+
+        z.hp -=
+          b.damage*.45;
+
+      }
+
+    }
+
+  }
+
+  if(
+    target.hp <= 0
+  ){
+
+    const i =
+      zombies.indexOf(target);
+
+    if(i !== -1){
+
+      zombies.splice(i,1);
+
+      kills++;
+
+      money +=
+        target.reward;
+
+      createParticles(
+        target.x,
+        target.y,
+        12
+      );
+
+      updateUI();
+    }
+  }
+}
+
+
+/* =====================================================
+   PARTÍCULAS
+===================================================== */
+
+function createParticles(
+  x,
+  y,
+  amount
+){
+
+  for(
+    let i=0;
+    i<amount;
+    i++
+  ){
+
+    const a =
+      Math.random() *
+      Math.PI *
+      2;
+
+    const s =
+      30 +
+      Math.random()*90;
+
+    particles.push({
+
+      x:x,
+      y:y,
+
+      vx:
+        Math.cos(a)*s,
+
+      vy:
+        Math.sin(a)*s,
+
+      life:
+        .3 +
+        Math.random()*.5
+
+    });
+  }
+}
+
+
+/* =====================================================
+   UPDATE PRINCIPAL
+===================================================== */
+
+function update(dt){
+
+  if(!running)
+    return;
+
+  dt *= gameSpeed;
+
+  if(waveActive){
+
+    spawnTimer -= dt;
+
+    if(
+      spawnLeft > 0 &&
+      spawnTimer <= 0
+    ){
+
+      spawnZombie();
+
+      spawnLeft--;
+
+      spawnTimer =
+        Math.max(
+          .28,
+          .75 -
+          wave*.018
+        );
+    }
+  }
+
+  for(
+    const z of zombies
+  ){
+    updateZombie(
+      z,
+      dt
+    );
+  }
+
+  for(
+    const t of towers
+  ){
+    updateTower(
+      t,
+      dt
+    );
+  }
+
+  for(
+    let i=bullets.length-1;
+    i>=0;
+    i--
+  ){
+
+    if(
+      !updateBullet(
+        bullets[i],
+        dt
+      )
+    ){
+
+      bullets.splice(
+        i,
+        1
+      );
+    }
+  }
+
+  for(
+    let i=particles.length-1;
+    i>=0;
+    i--
+  ){
+
+    const p =
+      particles[i];
+
+    p.life -= dt;
+
+    p.x +=
+      p.vx*dt;
+
+    p.y +=
+      p.vy*dt;
+
+    p.vx *= .97;
+    p.vy *= .97;
+
+    if(p.life <= 0){
+
+      particles.splice(
+        i,
+        1
+      );
+    }
+  }
+
+  if(
+    waveActive &&
+    spawnLeft <= 0 &&
+    zombies.length === 0
+  ){
+
+    waveActive = false;
+
+    const reward =
+      80 + wave*15;
+
+    money += reward;
+
+    wave++;
+
+    updateUI();
+
+    message(
+      "🎉 Onda concluída! +$" +
+      reward +
+      " — prepare a próxima."
+    );
+  }
+
+  updateUI();
+}
+
+/* =====================================================
+   DESENHAR TUDO
+===================================================== */
+
+function draw(){
+
+  ctx.clearRect(
+    0,
+    0,
+    W,
+    H
+  );
+
+  drawBackground();
+  drawPath();
+  drawBuildSpots();
+  drawBase();
+  drawTowers();
+  drawZombies();
+  drawBullets();
+  drawParticles();
+}
+
+
+/* =====================================================
+   FUNDO
+===================================================== */
+
+function drawBackground(){
+
+  const g =
+    ctx.createRadialGradient(
+      W/2,
+      H/2,
+      50,
+      W/2,
+      H/2,
+      Math.max(W,H)
+    );
+
+  g.addColorStop(
+    0,
+    "#19253d"
+  );
+
+  g.addColorStop(
+    1,
+    "#050810"
+  );
+
+  ctx.fillStyle = g;
+
+  ctx.fillRect(
+    0,
+    0,
+    W,
+    H
+  );
+
+  ctx.strokeStyle =
+    "rgba(100,130,170,.06)";
+
+  ctx.lineWidth = 1;
+
+  for(
+    let x=0;
+    x<W;
+    x+=40
+  ){
+
+    ctx.beginPath();
+
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,H);
+
+    ctx.stroke();
+  }
+
+  for(
+    let y=0;
+    y<H;
+    y+=40
+  ){
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,y);
+    ctx.lineTo(W,y);
+
+    ctx.stroke();
+  }
+}
+
+
+/* =====================================================
+   CAMINHO DOS ZUMBIS
+===================================================== */
+
+function drawPath(){
+
+  const path =
+    pathPoints();
+
+  ctx.lineCap =
+    "round";
+
+  ctx.lineJoin =
+    "round";
+
+
+  /* caminho externo */
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    path[0].x,
+    path[0].y
+  );
+
+  for(
+    let i=1;
+    i<path.length;
+    i++
+  ){
+
+    ctx.lineTo(
+      path[i].x,
+      path[i].y
+    );
+  }
+
+  ctx.strokeStyle =
+    "#172635";
+
+  ctx.lineWidth = 62;
+
+  ctx.stroke();
+
+
+  /* caminho interno */
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    path[0].x,
+    path[0].y
+  );
+
+  for(
+    let i=1;
+    i<path.length;
+    i++
+  ){
+
+    ctx.lineTo(
+      path[i].x,
+      path[i].y
+    );
+  }
+
+  ctx.strokeStyle =
+    "#2b3e4e";
+
+  ctx.lineWidth = 50;
+
+  ctx.stroke();
+
+
+  /* linha central */
+
+  ctx.setLineDash([
+    14,
+    14
+  ]);
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    path[0].x,
+    path[0].y
+  );
+
+  for(
+    let i=1;
+    i<path.length;
+    i++
+  ){
+
+    ctx.lineTo(
+      path[i].x,
+      path[i].y
+    );
+  }
+
+  ctx.strokeStyle =
+    "#617080";
+
+  ctx.lineWidth = 2;
+
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+}
+
+
+/* =====================================================
+   LOCAIS PARA CONSTRUIR TORRES
+===================================================== */
+
+function drawBuildSpots(){
+
+  if(!selectedBuild)
+    return;
+
+  for(
+    const s of buildSpots()
+  ){
+
+    const occupied =
+      towers.some(
+        t =>
+          dist(
+            t.x,
+            t.y,
+            s.x,
+            s.y
+          ) < 10
+      );
+
+    if(occupied)
+      continue;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      s.x,
+      s.y,
+      20,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fillStyle =
+      "rgba(30,180,230,.16)";
+
+    ctx.fill();
+
+    ctx.strokeStyle =
+      "#31d9ff";
+
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+
+
+    ctx.fillStyle =
+      "#66e8ff";
+
+    ctx.font =
+      "18px Arial";
+
+    ctx.textAlign =
+      "center";
+
+    ctx.textBaseline =
+      "middle";
+
+    ctx.fillText(
+      "+",
+      s.x,
+      s.y
+    );
+  }
+}
+
+
+/* =====================================================
+   BASE
+===================================================== */
+
+function drawBase(){
+
+  const b =
+    basePosition();
+
+
+  ctx.beginPath();
+
+  ctx.arc(
+    b.x,
+    b.y,
+    38,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fillStyle =
+    "#102d45";
+
+  ctx.fill();
+
+
+  ctx.strokeStyle =
+    "#4bdcff";
+
+  ctx.lineWidth = 4;
+
+  ctx.stroke();
+
+
+  ctx.font =
+    "30px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "middle";
+
+  ctx.fillText(
+    "🏰",
+    b.x,
+    b.y
+  );
+
+
+  /* barra de vida */
+
+  ctx.fillStyle =
+    "#1c252c";
+
+  ctx.fillRect(
+    b.x-35,
+    b.y-52,
+    70,
+    7
+  );
+
+
+  ctx.fillStyle =
+    "#31e28c";
+
+  ctx.fillRect(
+    b.x-35,
+    b.y-52,
+    70 *
+    Math.max(
+      baseHP/100,
+      0
+    ),
+    7
+  );
+}
+
+
+/* =====================================================
+   SPRITE DA TORRE
+===================================================== */
+
+function drawTowerSprite(t){
+
+  const d =
+    TYPES[t.type];
+
+  const col =
+    d.spriteCol;
+
+
+  const SHEET_W =
+    1000;
+
+  const SHEET_H =
+    1433;
+
+
+  const sw =
+    SHEET_W/3;
+
+  const sh =
+    SHEET_H/5;
+
+
+  const sx =
+    col*sw;
+
+  const sy =
+    Math.min(
+      t.level-1,
+      4
+    )*sh;
+
+
+  const size =
+    t === selectedTower
+      ? 58
+      : 52;
+
+
+  if(
+    towerImg.complete &&
+    towerImg.naturalWidth > 0
+  ){
+
+    ctx.drawImage(
+      towerImg,
+
+      sx,
+      sy,
+      sw,
+      sh,
+
+      t.x-size/2,
+      t.y-size/2,
+
+      size,
+      size
+    );
+
+  }
+  else{
+
+    ctx.beginPath();
+
+    ctx.arc(
+      t.x,
+      t.y,
+      22,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fillStyle =
+      d.color;
+
+    ctx.fill();
+  }
+
+
+  /* alcance da torre selecionada */
+
+  if(
+    t === selectedTower
+  ){
+
+    ctx.beginPath();
+
+    ctx.arc(
+      t.x,
+      t.y,
+
+      d.range +
+      (t.level-1)*8,
+
+      0,
+      Math.PI*2
+    );
+
+    ctx.fillStyle =
+      "rgba(70,220,255,.06)";
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+      "rgba(70,220,255,.45)";
+
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+  }
+
+
+  /* nível */
+
+  ctx.fillStyle =
+    "#fff";
+
+  ctx.font =
+    "10px Arial";
+
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "middle";
+
+  ctx.fillText(
+    "N"+t.level,
+    t.x,
+    t.y+34
+  );
+}
+
+
+/* =====================================================
+   DESENHAR TORRES
+===================================================== */
+
+function drawTowers(){
+
+  for(
+    const t of towers
+  ){
+
+    drawTowerSprite(t);
+
+  }
+}
+
+
+/* =====================================================
+   SPRITES DOS MONSTROS
+===================================================== */
+
+const MONSTERS = [
+
+  {
+    sx:0,
+    sy:120,
+    sw:240,
+    sh:280
+  },
+
+  {
+    sx:240,
+    sy:120,
+    sw:240,
+    sh:280
+  },
+
+  {
+    sx:480,
+    sy:120,
+    sw:240,
+    sh:280
+  },
+
+  {
+    sx:720,
+    sy:120,
+    sw:240,
+    sh:280
+  },
+
+  {
+    sx:960,
+    sy:120,
+    sw:240,
+    sh:280
+  }
+
+];
+
+
+/* =====================================================
+   DESENHAR MONSTRO
+===================================================== */
+
+function drawMonster(z){
+
+  let idx = 1;
+
+
+  if(
+    z.type === "tank"
+  ){
+
+    idx = 0;
+
+  }
+
+
+  if(
+    z.type === "fast"
+  ){
+
+    idx = 2;
+
+  }
+
+
+  if(
+    wave >= 5 &&
+    z.type === "normal"
+  ){
+
+    idx = 3;
+
+  }
+
+
+  if(
+    wave >= 8 &&
+    z.type === "tank"
+  ){
+
+    idx = 4;
+
+  }
+
+
+  const s =
+    MONSTERS[idx];
+
+
+  const size =
+    z.size*2.25;
+
+
+  if(
+    monsterImg.complete &&
+    monsterImg.naturalWidth > 0
+  ){
+
+    ctx.drawImage(
+
+      monsterImg,
+
+      s.sx,
+      s.sy,
+      s.sw,
+      s.sh,
+
+      z.x-size/2,
+      z.y-size*.78,
+
+      size,
+      size*1.17
+
+    );
+
+  }
+  else{
+
+    ctx.beginPath();
+
+    ctx.arc(
+      z.x,
+      z.y,
+      z.size,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fillStyle =
+      "#607d35";
+
+    ctx.fill();
+
+  }
+
+
+  /* barra de vida */
+
+  const width =
+    z.size*2.4;
+
+
+  ctx.fillStyle =
+    "#171b18";
+
+  ctx.fillRect(
+    z.x-width/2,
+    z.y-z.size-10,
+    width,
+    5
+  );
+
+
+  ctx.fillStyle =
+    "#45e66c";
+
+  ctx.fillRect(
+    z.x-width/2,
+    z.y-z.size-10,
+    width *
+    Math.max(
+      z.hp/z.maxHP,
+      0
+    ),
+    5
+  );
+}
+
+
+/* =====================================================
+   DESENHAR ZUMBIS
+===================================================== */
+
+function drawZombies(){
+
+  for(
+    const z of zombies
+  ){
+
+    drawMonster(z);
+
+  }
+}
+
+
+/* =====================================================
+   PROJÉTEIS
+===================================================== */
+
+function drawBullets(){
+
+  for(
+    const b of bullets
+  ){
+
+    ctx.beginPath();
+
+    ctx.arc(
+      b.x,
+      b.y,
+
+      b.type === "cannon"
+        ? 6
+        : 4,
+
+      0,
+      Math.PI*2
+    );
+
+
+    ctx.fillStyle =
+      b.color;
+
+
+    ctx.shadowColor =
+      b.color;
+
+    ctx.shadowBlur = 12;
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+  }
+}
+
+
+/* =====================================================
+   PARTÍCULAS
+===================================================== */
+
+function drawParticles(){
+
+  for(
+    const p of particles
+  ){
+
+    ctx.globalAlpha =
+      Math.max(
+        0,
+        p.life/.8
+      );
+
+
+    ctx.fillStyle =
+      "#63dfff";
+
+
+    ctx.fillRect(
+      p.x,
+      p.y,
+      4,
+      4
+    );
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+
+/* =====================================================
+   DISTÂNCIA
+===================================================== */
+
+function dist(
+  x1,
+  y1,
+  x2,
+  y2
+){
+
+  return Math.hypot(
+    x2-x1,
+    y2-y1
+  );
+
+}
+
+
+/* =====================================================
+   MENSAGENS
+===================================================== */
+
+function message(text){
+
+  document
+    .getElementById("info")
+    .textContent =
+      text;
+
+}
+
+
+/* =====================================================
+   ATUALIZAR INTERFACE
+===================================================== */
+
+function updateUI(){
+
+  document
+    .getElementById("money")
+    .textContent =
+      Math.floor(money);
+
+
+  document
+    .getElementById("wave")
+    .textContent =
+      wave;
+
+
+  document
+    .getElementById("baseHP")
+    .textContent =
+      Math.ceil(baseHP);
+
+
+  document
+    .getElementById("kills")
+    .textContent =
+      kills;
+
+}
+
+
+/* =====================================================
+   GAME OVER
+===================================================== */
+
+function gameOver(){
+
+  if(!running)
+    return;
+
+
+  running = false;
+
+  waveActive = false;
+
+
+  document
+    .getElementById("finalWave")
+    .textContent =
+      wave;
+
+
+  document
+    .getElementById("finalKills")
+    .textContent =
+      kills;
+
+
+  document
+    .getElementById("gameover")
+    .style.display =
+      "flex";
+
+}
+
+
+/* =====================================================
+   LOOP PRINCIPAL
+===================================================== */
+
+function loop(time){
+
+  let dt =
+    (time-lastTime)/1000;
+
+
+  lastTime =
+    time;
+
+
+  /* evita saltos muito grandes */
+
+  if(dt > .05)
+    dt = .05;
+
+
+  update(dt);
+
+  draw();
+
+
+  requestAnimationFrame(
+    loop
+  );
+
+}
+
+
+/* =====================================================
+   INICIAR JOGO
+===================================================== */
+
+reset();
+
+requestAnimationFrame(
+  loop
+);
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
