@@ -2449,7 +2449,19 @@ function drawBase(){
    SPRITE DA TORRE
 ===================================================== */
 
-function drawTowerSprite(t){
+function drawTowerSprite(t){  // ANIMAÇÃO DA TORRE
+  if(!t.anim){
+    t.anim = {
+      recoil: 0,
+      flash: 0,
+      pulse: Math.random() * Math.PI * 2
+    };
+  }
+
+  t.anim.pulse += 0.08;
+
+  t.anim.recoil *= 0.82;
+  t.anim.flash *= 0.75;
 
   const d =
     TYPES[t.type];
