@@ -1773,7 +1773,21 @@ function updateTower(t,dt){
   if(!target)
     return;
 
-  bullets.push({
+  bullets.push({  // Animação de disparo
+  if(!t.anim){
+    t.anim = {
+      recoil: 0,
+      flash: 0,
+      pulse: Math.random() * Math.PI * 2
+    };
+  }
+
+  t.anim.recoil =
+    t.type === "cannon"
+      ? 7
+      : 4;
+
+  t.anim.flash = 1;
     x:t.x,
     y:t.y,
     target:target,
