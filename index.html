@@ -2509,9 +2509,19 @@ function drawTowerSprite(t){  // ANIMAÇÃO DA TORRE
 
 
   const size =
-    t === selectedTower
-      ? 58
-      : 52;
+  t===selectedTower
+    ? 58
+    : 52;
+
+const recoil =
+  t.anim
+    ? t.anim.recoil
+    : 0;
+
+const pulse =
+  t.anim
+    ? Math.sin(t.anim.pulse) * 1.2
+    : 0;
 
 
   if(
